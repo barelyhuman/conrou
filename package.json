@@ -1,0 +1,43 @@
+{
+  "name": "@barelyhuman/conrou",
+  "version": "0.1.2-alpha.3",
+  "repository": "git@github.com:barelyhuman/conrou.git",
+  "license": "MIT",
+  "author": "Reaper <ahoy@barelyhuman.dev>",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "fix": "npx prettier --write .",
+    "prepublishOnly": "nr build",
+    "test": "uvu -r esm tests"
+  },
+  "prettier": "@barelyhuman/prettier-config",
+  "devDependencies": {
+    "@antfu/ni": "^0.16.2",
+    "@barelyhuman/prettier-config": "^1.0.0",
+    "esm": "^3.2.25",
+    "prettier": "^2.7.1",
+    "tsup": "^6.1.2",
+    "typescript": "^4.7.4",
+    "uvu": "^0.5.6"
+  },
+  "packageManager": "pnpm@6.32.10",
+  "engines": {
+    "node": ">=14"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
