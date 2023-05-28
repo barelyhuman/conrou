@@ -26,8 +26,8 @@ const _router = express.Router()
 const router = createControllerBinder(_router)
 
 class UserController {
-  me() {
-    return 'reaper'
+  me(_,res) {
+    return res.send('reaper')
   }
 }
 
