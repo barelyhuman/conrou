@@ -1,4 +1,5 @@
 import { ControllerBindingError, RouterBindingError } from './errors.js'
+import { compile } from 'path-to-regexp'
 
 /**
  * @param {import("./types/types").RouterInterface} router
@@ -142,6 +143,16 @@ export function createControllerBinder(router) {
      */
     delete(url, action) {
       return this.addRoute('delete', url, action)
+    },
+    routeForAction(action, params = {}) {
+      for (let entry of [...routeBinding]) {
+        if (entry[1].action !== action) {
+          continue
+        }
+        const url = entry[0]
+        const fn = compile(url, { encode: encodeURIComponent })
+        return fn({ ...params })
+      }
     },
     listRoutes() {
       return [...routeBinding.entries()].map(x => ({
