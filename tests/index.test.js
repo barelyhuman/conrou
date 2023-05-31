@@ -116,4 +116,23 @@ test('Get route from controller', () => {
   assert.is(route, '/get/1')
 })
 
+test.skip('Get route from the alias of the controller', () => {
+  const router = createControllerBinder(mockRouter)
+
+  router.register(
+    class NamedController {
+      index(req) {
+        return req.params.id
+      }
+    },
+    {
+      alias: 'named',
+    }
+  )
+
+  router.get('/get/:id', 'NamedController.index')
+  const route = router.routeForAction('named.index', { id: 1 })
+  assert.is(route, '/get/1')
+})
+
 test.run()
