@@ -44,6 +44,12 @@ router.get('/me', 'UserController.me')
 
 // or, if you created an alias
 router.get('/me', 'user.me')
+
+// to get the route for a particular controller, you can use the
+// `routeForAction` method on the router.
+
+router.routeForAction('UserController.me') //=> /me
+router.routeForAction('user.me') //=> /me
 ```
 
 ## LICENSE
