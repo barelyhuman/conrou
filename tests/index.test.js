@@ -112,7 +112,7 @@ test('Get route from controller', () => {
   )
 
   router.get('/get/:id', 'NamedController.index')
-  const route = router.getRoute('NamedController.index', { id: 1 })
+  const route = router.routeForAction('NamedController.index', { id: 1 })
   assert.is(route, '/get/1')
 })
 
