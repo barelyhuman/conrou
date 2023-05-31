@@ -33,12 +33,21 @@ export function createControllerBinder(router) {
           ControllerBindingError.NAME_ALREADY_BOUND
         )
       }
+
       const controllerInst = new controller()
 
       if (alias) {
-        controllerBindings.set(alias, controllerInst)
+        controllerBindings.set(alias, {
+          alias: _name,
+          name: alias,
+          controller: controllerInst,
+        })
       }
-      controllerBindings.set(_name, controllerInst)
+      controllerBindings.set(_name, {
+        alias: _name,
+        name: _name,
+        controller: controllerInst,
+      })
     },
 
     /**
@@ -55,8 +64,8 @@ export function createControllerBinder(router) {
       }
 
       const [controllerName, actionName] = action.split('.')
-      const controller = controllerBindings.get(controllerName)
-      if (!controller) {
+      const binding = controllerBindings.get(controllerName)
+      if (!binding) {
         throw new RouterBindingError(
           `Controller with the name ${controllerName} was not found.
        Available Names: ${[...controllerBindings.entries()]
@@ -66,6 +75,8 @@ export function createControllerBinder(router) {
           RouterBindingError.CONTROLLER_NOT_FOUND
         )
       }
+
+      const controller = binding.controller
 
       if (!controller[actionName]) {
         throw new RouterBindingError(
@@ -89,14 +100,23 @@ export function createControllerBinder(router) {
      * @param {string} name
      */
     getController(name) {
-      return controllerBindings.get(name)
+      const binding = controllerBindings.get(name)
+      return binding.controller || undefined
     },
 
     /**
      * @param {string} base
      */
-    resource(base, controller) {
+    resource(base, controllerName) {
       let normalizedBase = base
+      const binding = controllerBindings.get(controllerName)
+
+      if (!binding) {
+        throw new ControllerBindingError(
+          'Cannot find the controller with the name ${controllerName}',
+          ControllerBindingError.NOT_FOUND
+        )
+      }
 
       if (!normalizedBase.startsWith('/')) {
         normalizedBase = '/' + base
@@ -105,6 +125,8 @@ export function createControllerBinder(router) {
       if (normalizedBase.endsWith('/')) {
         normalizedBase = base.slice(0, -1)
       }
+
+      const controller = binding.controller
 
       this.get(normalizedBase, controller.index)
       this.get(`${normalizedBase}/new`, controller.new)
@@ -145,10 +167,28 @@ export function createControllerBinder(router) {
       return this.addRoute('delete', url, action)
     },
     routeForAction(action, params = {}) {
+      const [controllerName, actionName] = action.split('.')
+      const binding = controllerBindings.get(controllerName)
+
+      if (!binding) {
+        throw new ControllerBindingError(
+          'Cannot find the controller with the name ${controllerName}',
+          ControllerBindingError.NOT_FOUND
+        )
+      }
+
       for (let entry of [...routeBinding]) {
-        if (entry[1].action !== action) {
+        if (
+          entry[1].controllerName !== binding.name &&
+          entry[1].controllerName !== binding.alias
+        ) {
           continue
         }
+
+        if (entry[1].actionName !== actionName) {
+          continue
+        }
+
         const url = entry[0]
         const fn = compile(url, { encode: encodeURIComponent })
         return fn({ ...params })

@@ -21,6 +21,7 @@ export class ControllerBindingError extends Error {
 
   static NO_NAME = 0
   static NAME_ALREADY_BOUND = 1
+  static NOT_FOUND = 2
 
   constructor(message, code) {
     super(message)

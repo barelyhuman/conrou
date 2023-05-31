@@ -116,7 +116,7 @@ test('Get route from controller', () => {
   assert.is(route, '/get/1')
 })
 
-test.skip('Get route from the alias of the controller', () => {
+test('Get route from the alias of the controller', () => {
   const router = createControllerBinder(mockRouter)
 
   router.register(
