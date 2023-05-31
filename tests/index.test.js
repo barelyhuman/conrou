@@ -100,4 +100,20 @@ test('Action name', () => {
   assert.is(match.controllerName, 'NamedController')
 })
 
+test('Get route from controller', () => {
+  const router = createControllerBinder(mockRouter)
+
+  router.register(
+    class NamedController {
+      index(req) {
+        return req.params.id
+      }
+    }
+  )
+
+  router.get('/get/:id', 'NamedController.index')
+  const route = router.getRoute('NamedController.index', { id: 1 })
+  assert.is(route, '/get/1')
+})
+
 test.run()

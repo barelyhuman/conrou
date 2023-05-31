@@ -4,6 +4,7 @@
     "checkJs": true,
     "removeComments": true,
     "target": "esnext",
+    "moduleResolution": "node",
     "declaration": true,
     "outDir": "dist",
     "esModuleInterop": true,
