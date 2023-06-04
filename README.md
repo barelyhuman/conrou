@@ -43,15 +43,51 @@ router.register(UserController, {
 })
 
 router.get('/me', 'UserController.me')
-
 // or, if you created an alias
 router.get('/me', 'user.me')
+// or
+router.get('/me', (req, res) => {
+  console.log('hello')
+  res.end()
+})
 
 // to get the route for a particular controller, you can use the
 // `routeForAction` method on the router.
 
 router.routeForAction('UserController.me') //=> /me
 router.routeForAction('user.me') //=> /me
+```
+
+## Middleware
+
+Each router interface that you use might have a different way of handling middleware and so
+it's not really recommended to use `conrou`'s middleware utility for this.
+
+Though, conrou does provide a way for you to add in middleware that mimic the execution order similar to
+express.
+
+```js
+// Using `polka` as an example
+const app = polka()
+// Register the router as before
+const router = createControllerBinder(app)
+
+router.register(AuthController)
+router.registerMiddleware('auth', (req, res, next) => {
+  req.currentUser = {
+    id: 1,
+  }
+  next()
+})
+
+router
+  .get('/user', (req, res) => {
+    console.log(req.currentUser) // 1
+    return res.end()
+  })
+  // tie the named middleware to this particular route
+  // this syntax / API was inspired by AdonisJS (https://github.com/adonisjs/)
+  .middleware(['auth'])
 ```
 
 ## LICENSE
