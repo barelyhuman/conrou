@@ -202,14 +202,26 @@ export function createControllerBinder(router) {
 
       const controller = binding.controller
 
-      this.get(normalizedBase, controller.index)
-      this.get(`${normalizedBase}/new`, controller.new)
-      this.post(normalizedBase, controller.store)
-      this.get(`${normalizedBase}/:id`, controller.show)
-      this.get(`${normalizedBase}/:id/edit`, controller.edit)
-      this.put(`${normalizedBase}/:id`, controller.update)
-      this.patch(`${normalizedBase}/:id`, controller.update)
-      this.delete(`${normalizedBase}/:id`, controller.destroy)
+      if (controller.index) this.get(normalizedBase, `${controllerName}.index`)
+
+      if (controller.create)
+        this.get(`${normalizedBase}/new`, `${controllerName}.create`)
+
+      if (controller.store) this.post(normalizedBase, `${controllerName}.store`)
+
+      if (controller.show)
+        this.get(`${normalizedBase}/:id`, `${controllerName}.show`)
+
+      if (controller.edit)
+        this.get(`${normalizedBase}/:id/edit`, `${controllerName}.edit`)
+
+      if (controller.update) {
+        this.put(`${normalizedBase}/:id`, `${controllerName}.update`)
+        this.patch(`${normalizedBase}/:id`, `${controllerName}.update`)
+      }
+
+      if (controller.destroy)
+        this.delete(`${normalizedBase}/:id`, `${controllerName}.destroy`)
     },
 
     /**
