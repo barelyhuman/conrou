@@ -19,14 +19,16 @@ npm i @barelyhuman/conrou
 
 ## Usage
 
-The following uses `express.Router` as an example but you can use any router that has the `get`, `post`, `put` methods with the signature of `(url:string,handler:func)`
+The following uses `express.Router` as an example but you can use any router
+that has the `get`, `post`, `put` methods with the signature of
+`(url:string,handler:func)`
 
 ```js
 const _router = express.Router()
 const router = createControllerBinder(_router)
 
 class UserController {
-  me(_,res) {
+  me(_, res) {
     return res.send('reaper')
   }
 }

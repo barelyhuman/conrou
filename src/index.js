@@ -1,5 +1,6 @@
 import { ControllerBindingError, RouterBindingError } from './errors.js'
 import { compile } from 'path-to-regexp'
+import { lazyIterator } from './lib/array.js'
 
 /**
  * @param {import("./types/types").RouterInterface} router
@@ -7,6 +8,7 @@ import { compile } from 'path-to-regexp'
 export function createControllerBinder(router) {
   const controllerBindings = new Map()
   const routeBinding = new Map()
+  const middlewareRegister = new Map()
 
   return {
     getRouter() {
@@ -51,6 +53,14 @@ export function createControllerBinder(router) {
     },
 
     /**
+     * @param {string} name
+     * @param {any} middleware
+     */
+    registerMiddleware(name, middleware) {
+      middlewareRegister.set(name, middleware)
+    },
+
+    /**
      * @param {string} method
      * @param {string} url
      * @param {string} action
@@ -61,6 +71,13 @@ export function createControllerBinder(router) {
           `${method} method doesn't exist on router`,
           RouterBindingError.INVALID_METHOD
         )
+      }
+
+      // already a function handler
+      // don't add a binding for it
+      if (typeof action === 'function') {
+        router[method](url, action)
+        return
       }
 
       const [controllerName, actionName] = action.split('.')
@@ -85,7 +102,33 @@ export function createControllerBinder(router) {
         )
       }
 
-      router[method](url, controller[actionName])
+      class MiddlewareError extends Error {}
+
+      router[method](url, (req, res) => {
+        const _route = routeBinding.get(url)
+
+        if (_route && _route.middleware && _route.middleware.length) {
+          const middlewareIterator = lazyIterator(_route.middleware)
+
+          const createNext = () => {
+            return () => {
+              const { value, done } = middlewareIterator.next()
+              if (done) return
+              value(req, res, createNext())
+            }
+          }
+
+          const initial = middlewareIterator.next()
+
+          try {
+            initial.value(req, res, createNext())
+          } catch (err) {
+            if (err instanceof MiddlewareError) {
+              throw err
+            }
+          }
+        }
+      })
 
       routeBinding.set(url, {
         method,
@@ -93,7 +136,38 @@ export function createControllerBinder(router) {
         action,
         controllerName,
         actionName,
+        middleware: [controller[actionName]],
       })
+
+      return {
+        middleware: this.__bindMiddleware(url),
+      }
+    },
+
+    __bindMiddleware(url) {
+      const binding = routeBinding.get(url)
+
+      return middlewareNames => {
+        if (!binding) {
+          return
+        }
+
+        const middlewareList =
+          typeof middlewareNames === 'string'
+            ? [middlewareNames]
+            : middlewareNames
+
+        let middlewareOrder = []
+
+        for (let i = 0; i < middlewareList.length; i++) {
+          middlewareOrder.push(middlewareRegister.get(middlewareList[i]))
+        }
+
+        routeBinding.set(url, {
+          ...binding,
+          middleware: [...middlewareOrder, ...binding.middleware],
+        })
+      }
     },
 
     /**

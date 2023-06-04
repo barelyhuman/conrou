@@ -4,10 +4,17 @@ import { createControllerBinder } from '../src/index.js'
 import { ControllerBindingError, RouterBindingError } from '../src/errors.js'
 
 const mockRouter = {
-  get() {},
+  urls: new Map(),
+  get(x, m) {
+    this.urls.set(x, m)
+  },
   post() {},
   put() {},
   post() {},
+  exec(method, url) {
+    const h = this.urls.get(url)
+    h()
+  },
 }
 
 test('same router instance', () => {
@@ -133,6 +140,55 @@ test('Get route from the alias of the controller', () => {
   router.get('/get/:id', 'NamedController.index')
   const route = router.routeForAction('named.index', { id: 1 })
   assert.is(route, '/get/1')
+})
+
+test('direct method exec', () => {
+  const router = createControllerBinder(mockRouter)
+  let executed = false
+  router.get('/user', (req, res) => {
+    executed = true
+  })
+
+  router.getRouter().exec('get', '/user')
+  assert.is(executed, true)
+})
+
+test('middleware additions', () => {
+  const router = createControllerBinder(mockRouter)
+
+  let executionValue = 0
+  let middlewareValue = 0
+
+  router.register(
+    class NamedController {
+      index(req) {
+        executionValue = 1
+        return
+      }
+    },
+    {
+      alias: 'named',
+    }
+  )
+
+  router.registerMiddleware('auth', (req, res, next) => {
+    middlewareValue += 1
+    next()
+  })
+
+  router.registerMiddleware('reqUtils', (req, res, next) => {
+    middlewareValue += 1
+    next()
+  })
+
+  router
+    .get('/get/:id', 'NamedController.index')
+    .middleware(['auth', 'reqUtils'])
+
+  router.getRouter().exec('get', '/get/:id')
+
+  assert.is(middlewareValue, 2)
+  assert.is(executionValue, 1)
 })
 
 test.run()
